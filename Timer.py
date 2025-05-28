@@ -16,7 +16,7 @@ class TimezoneClockApp(tk.Tk):
         self.timezone_dropdown.pack(pady=10)
 
         # Button to add timezone
-        self.add_button = tk.Button(self, text="Add Timezones", command=self.add_timezone)
+        self.add_button = tk.Button(self, text="Add Timezone", command=self.add_timezone)
         self.add_button.pack()
 
         # Frame to hold timezone clocks
