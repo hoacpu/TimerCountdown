@@ -1,0 +1,3 @@
+#convert python script to executable file
+
+pyinstaller --noconsole TimerGUI.py
