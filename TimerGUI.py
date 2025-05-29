@@ -145,6 +145,18 @@ class App(tk.Tk):
         self.title_bar_hidden = False
         self.win_x = 0
         self.win_y = 0
+        self.config_file = self.load_config()
+        self.config_file["name"] = self.config_file.get("name", "default")
+        self.volume_var = tk.DoubleVar(value=self.config_file.get("volume", 1.0))
+        self.topmost_var = tk.BooleanVar(value=self.config_file.get("top_most", "False"))
+        self.second_left_var = tk.StringVar(value=self.config_file.get("second_left", 5))
+        self.loop_var = tk.BooleanVar(value=self.config_file.get("loop_timer", "false"))
+        self.selected_sound_file = tk.StringVar(value=self.config_file.get("sound_path", "coin_ringing.wav"))
+        self.font_size_label = self.config_file.get("font_size_label",20)
+        self.schedule_time_str = tk.StringVar(value=self.config_file.get("schedule_time", "6:30"))
+        self.duration_var = tk.StringVar(value=self.config_file.get("timer_duration", "60"))
+
+
         self.guiSetup()
 
     def init_mixer(self):
@@ -228,11 +240,10 @@ class App(tk.Tk):
 
     # ---- SOUND FUNCTION ----
     def play_sound(self):
+
         if not self.selected_sound_file.get():
             return
-
         try:
-
             selected_file = self.selected_sound_file.get()
             if selected_file:
                 sound_path = os.path.join(self.SOUND_FOLDER, selected_file)
@@ -261,6 +272,9 @@ class App(tk.Tk):
         )
         if file_path:
             self.selected_sound_file.set(file_path)
+            self.config_file = self.load_config()
+            self.config_file["sound_path"] = file_path
+            self.save_config(self.config_file)
 
 
     def set_schedule_time(self):
@@ -287,7 +301,7 @@ class App(tk.Tk):
         dropdown_frame.pack()
 
         self.config_file = self.load_config()
-        self.schedule_time_str.set(self.config_file.get("schedule_time", "6:30"))
+
         sch_time = self.schedule_time_str.get().split(":")
 
         self.hour_var = tk.StringVar(value=sch_time[0])
@@ -323,18 +337,11 @@ class App(tk.Tk):
         tk.Label(self.popup, text="Volume (%):", font=('Arial', 12)).grid(row=0, column=0, padx=10, pady=10, sticky="e")
         self.scale = tk.Scale(self.popup, from_=0, to=100, orient="horizontal",
                          command=set_volume)
-
-        self.config_file = self.load_config()
-
-        self.volume_var= tk.DoubleVar(value=self.config_file.get("volume", 1.0))
-
         self.scale.set(int(self.volume_var.get() * 100))
         self.scale.grid(row=0, column=1, padx=10, pady=10)
 
         # Create and place the second left label and entry
         tk.Label(self.popup, text="Sound On After Number Seconds:", font=('Arial', 12)).grid(row=1, column=0, padx=10, pady=10, sticky="e")
-        config = self.load_config()
-        self.second_left_var = tk.StringVar(value=config.get("second_left", 10))
         second_left_entry = tk.Entry(self.popup, textvariable=self.second_left_var, width=10, font=('Arial', 12))
         second_left_entry.grid(row=1, column=1, padx=10, pady=10)
 
@@ -373,7 +380,6 @@ class App(tk.Tk):
         self.popup.title("Set Timer Duration")
 
         ttk.Label(self.popup, text="Enter duration in seconds:").pack(padx=10, pady=5)
-        self.duration_var = tk.StringVar()
 
         self.entry = ttk.Entry(self.popup, textvariable=self.duration_var)
         self.entry.insert(0, self.countdown_time)
@@ -539,7 +545,6 @@ class App(tk.Tk):
         # add sound volumn to file menu
         self.volume_var = tk.DoubleVar(value=1.0)
         self.popup_menu.add_command(label="Sound Volume...", command=self.open_volume_control)
-        self.selected_sound_file = tk.StringVar(value="coin_ringing.wav")  # default
         self.popup_menu.add_command(label="Sound File...", command=self.choose_sound_file)
 
         self.popup_menu.add_separator()
@@ -590,8 +595,7 @@ class App(tk.Tk):
         self.configure(menu=self.menu_bar)
         self.bind("<Escape>", self.toggle_menu)
         # add looper timer
-        self.config_file = self.load_config()
-        self.loop_var = tk.BooleanVar(value=self.config_file.get("loop_timer", "false"))
+
         self.file_menu.add_checkbutton(
             label="Loop Timer",
             onvalue=True,
@@ -600,20 +604,16 @@ class App(tk.Tk):
             command=self.toggle_loop
         )
         # Select Sound File
-        self.selected_sound_file = tk.StringVar(value="coin_ringing.wav")  # default
+          # default
         self.file_menu.add_command(label="Select Sound File...", command=self.choose_sound_file)
         # add schedule_time_str
         self.timer_job_id = None
-        self.schedule_time_str = tk.StringVar(value="")
         self.cancel_schedule_flag = tk.BooleanVar(value=False)
         self.timer_running = tk.BooleanVar(value=False)
         self.file_menu.add_command(label="Start on Schedule...", command=self.set_schedule_time)
         # add sound volumn to file menu
         self.volume_var = tk.DoubleVar(value=1.0)
         self.file_menu.add_command(label="Sound Volume...", command=self.open_volume_control)
-        # sync option
-        self.sync_mode = tk.StringVar(value="none")  # options: "none", "even", "odd"
-        self.sync_menu = tk.Menu(self.file_menu, tearoff=0)
         self.file_menu.add_command(label="Set Timer Duration...", command=self.set_timer_duration)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Exit", command=self.quit)
@@ -626,7 +626,7 @@ class App(tk.Tk):
             self.view_menu.add_command(label=label, command=lambda l=label: self.set_timer_font(l))
         # Track the 'Always on Top' state
         self.config_file = self.load_config()
-        self.topmost_var = tk.BooleanVar(value=self.config_file.get("top_most", "False"))
+
         self.view_menu.add_checkbutton(
             label="Always on Top ✓",
             onvalue=True,
@@ -654,17 +654,13 @@ class App(tk.Tk):
         #initial sound volume
         self.init_mixer()
 
-        # sync_mode option
-        # self.sync_mode = tk.StringVar(value="none")
-        # self.sync_frame = tk.Frame(self)
-        # self.sync_frame.pack(pady=10)
 
         # self.timer_name_label = tk.Label(self, text="Default", font=("Helvetica", 8))
         # self.timer_name_label.pack(pady=2)
         self.timer_label = tk.Label(self, text="Ready", font=("Helvetica", 36))
         self.timer_label.pack(pady=10)
-        self.saved_label = config.get("font_size_label")
-        self.set_timer_font(self.saved_label)
+
+        self.set_timer_font(self.font_size_label)
         #load timer font color
         self.timer_label.config(fg=self.config_file.get("font_color","black"))
 
