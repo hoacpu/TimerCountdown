@@ -156,7 +156,6 @@ class App(tk.Tk):
         self.schedule_time_str = tk.StringVar(value=self.config_file.get("schedule_time", "6:30"))
         self.duration_var = tk.StringVar(value=self.config_file.get("timer_duration", "60"))
 
-
         self.guiSetup()
 
     def init_mixer(self):
@@ -585,15 +584,20 @@ class App(tk.Tk):
         self.menu_visible = True
         self.menu_bar = None
         self.menu_bar = tk.Menu(self)
+        # Set the menu
+        self.configure(menu=self.menu_bar)
+        self.bind("<Escape>", self.toggle_menu)
 
         self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.file_menu.add_command(label="New Timer", command=self.open_new_timer)
         self.file_menu.add_command(label="New Clock", command=self.open_new_clock)
         self.file_menu.add_separator()
+
+        self.file_menu.add_command(label="Start Timer", command=self.start_timer)
+        self.file_menu.add_command(label="Stop Timer", command=self.stop_timer)
+        self.file_menu.add_separator()
         self.menu_bar.add_cascade(label="File", menu=self.file_menu)
-        # Set the menu
-        self.configure(menu=self.menu_bar)
-        self.bind("<Escape>", self.toggle_menu)
+
         # add looper timer
 
         self.file_menu.add_checkbutton(
